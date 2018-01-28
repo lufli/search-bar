@@ -5,7 +5,7 @@ import {
   Input,
   Menu
 } from 'antd';
-import { updateLocation } from '../actions';
+import { updateLocation, updateViewport } from '../actions';
 
 class SearchBar extends Component {
   constructor(props) {
@@ -19,6 +19,7 @@ class SearchBar extends Component {
     this.renderOption = this.renderOption.bind(this);
     this.handleChange = this.handleChange.bind(this);
     this.handleClick = this.handleClick.bind(this);
+    this.onSearch = this.onSearch.bind(this);
   }
 
   renderOption() {
@@ -80,6 +81,16 @@ class SearchBar extends Component {
     })
   }
 
+  onSearch() {
+    fetch('https://api.tiles.mapbox.com/geocoding/v5/mapbox.places/'+encodeURIComponent(this.state.term)+'.json?access_token=pk.eyJ1IjoibGx1ZmFuIiwiYSI6ImNqY3h0dGpxeTA2c2UzM3A3eXF0cW1xNGoifQ.AiV1hlzIXF2F6AfXUzqDyw')
+    .then(res => res.json())
+    .then(res => {
+      const { center, text, place_name } = res.features[0];
+      this.props.updateLocation(center, text, place_name);
+    })
+    // .then(res => {console.log(res)})
+  }
+
   render() {
     const Search = Input.Search;
     return (
@@ -97,7 +108,7 @@ class SearchBar extends Component {
         <Search
           placeholder="Search nodes and places"
           value={this.state.term}
-          onSearch={value => console.log(value)}
+          onSearch={this.onSearch}
           onChange={this.handleChange}
           onFocus={this.onFocus}
           
@@ -124,4 +135,4 @@ function mapStateToProps(state) {
   }
 }
 
-export default connect(mapStateToProps, { updateLocation })(SearchBar);
+export default connect(mapStateToProps, { updateLocation, updateViewport })(SearchBar);
