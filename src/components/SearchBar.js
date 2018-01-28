@@ -5,7 +5,7 @@ import {
   Input,
   Menu
 } from 'antd';
-import { updateLocation, updateViewport } from '../actions';
+import * as actions from '../actions';
 
 class SearchBar extends Component {
   constructor(props) {
@@ -15,7 +15,6 @@ class SearchBar extends Component {
       showOption: false
     }
     this.onFocus = this.onFocus.bind(this);
-    this.onBlur = this.onBlur.bind(this);
     this.renderOption = this.renderOption.bind(this);
     this.handleChange = this.handleChange.bind(this);
     this.handleClick = this.handleClick.bind(this);
@@ -61,12 +60,6 @@ class SearchBar extends Component {
     })
   }
 
-  onBlur() {
-    this.setState({
-      showOption: false
-    })
-  }
-
   handleChange(event) {
     this.setState({
       ...this.state,
@@ -75,20 +68,19 @@ class SearchBar extends Component {
   }
 
   handleClick(event) {
-    this.props.updateLocation(event.item.props.value, event.item.props.name, event.item.props.locality);
+    const { value, name, locality } = event.item.props;
+    this.props.updateLocation(value, name, locality);
     this.setState({
       showOption: false
     })
   }
 
   onSearch() {
-    fetch('https://api.tiles.mapbox.com/geocoding/v5/mapbox.places/'+encodeURIComponent(this.state.term)+'.json?access_token=pk.eyJ1IjoibGx1ZmFuIiwiYSI6ImNqY3h0dGpxeTA2c2UzM3A3eXF0cW1xNGoifQ.AiV1hlzIXF2F6AfXUzqDyw')
-    .then(res => res.json())
-    .then(res => {
-      const { center, text, place_name } = res.features[0];
-      this.props.updateLocation(center, text, place_name);
+    this.props.search(this.state.term);
+    this.setState({
+      term: '',
+      showOption: false
     })
-    // .then(res => {console.log(res)})
   }
 
   render() {
@@ -111,7 +103,6 @@ class SearchBar extends Component {
           onSearch={this.onSearch}
           onChange={this.handleChange}
           onFocus={this.onFocus}
-          
           style={{ width: '100%' }}
         />
           <Menu
@@ -135,4 +126,4 @@ function mapStateToProps(state) {
   }
 }
 
-export default connect(mapStateToProps, { updateLocation, updateViewport })(SearchBar);
+export default connect(mapStateToProps, actions)(SearchBar);

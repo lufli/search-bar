@@ -1,4 +1,4 @@
-import { UPDATE_LOCATION, UPDATE_VIEWPORT } from "../actions/index";
+import { UPDATE_LOCATION, UPDATE_VIEWPORT, SHOW_CARD } from "../actions/index";
 
 const initialState = {
   longitude: -122.4376,
@@ -9,7 +9,8 @@ const initialState = {
     longitude: -122.4376,
     latitude: 37.7577,
     zoom: 8
-  }
+  },
+  showCard: true
 }
 
 export default function(state = initialState, action) {
@@ -31,6 +32,11 @@ export default function(state = initialState, action) {
       return {
         ...state,
         viewport: action.payload
+      }
+    case SHOW_CARD:
+      return {
+        ...state,
+        showCard: action.payload
       }
     default:
       return state
