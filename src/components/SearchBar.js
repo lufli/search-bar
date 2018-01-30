@@ -1,9 +1,11 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
+import _ from 'lodash';
 import {
   Card,
   Input,
-  Menu
+  Menu,
+  Icon
 } from 'antd';
 import * as actions from '../actions';
 
@@ -19,6 +21,8 @@ class SearchBar extends Component {
     this.handleChange = this.handleChange.bind(this);
     this.handleClick = this.handleClick.bind(this);
     this.onSearch = this.onSearch.bind(this);
+    this.search = _.debounce(this.props.search, 300);
+    this.searchLocation = _.debounce(this.props.searchLocation, 300);
   }
 
   renderOption() {
@@ -30,26 +34,40 @@ class SearchBar extends Component {
             key={element._id}
             name={element.device.name}
             locality={element.device.locality}
-            onClick={()=>{this.props.updateLocation(element.device.location.coordinates)}}
             >
-              {element.device.name}
+              {element.device.name}<Icon style={{float: 'right', position: 'relative', top: 14}} type="desktop" />
           </Menu.Item>
           )
         )
       )
     } else {
+      const filteredNode = this.props.node.filter(element => element.device.name.toLowerCase().indexOf(this.state.term.toLowerCase())!==-1);
+      let mapedResult = [];
+      if (filteredNode.length<=2) {
+        mapedResult = this.props.result.map((element) => (
+          <Menu.Item
+            value={element.center}
+            key={element.id}
+            name={element.text}
+            locality={element.place_name}
+          >
+            {element.text}
+          </Menu.Item>
+        ))
+      }
       return (
-        this.props.node.filter(element => element.device.name.toLowerCase().indexOf(this.state.term.toLowerCase())!==-1)
-        .map((element) => (
+        filteredNode.map((element) => (
           <Menu.Item
             value={element.device.location.coordinates}
             key={element._id}
-            onClick={()=>{console.log(element.device.location.coordinates); this.props.updateLocation(element.device.location.coordinates)}}
+            name={element.device.name}
+            locality={element.device.locality}
           >
-            {element.device.name}
+            {element.device.name}<Icon style={{float: 'right', position: 'relative', top: 14}} type="desktop" />
           </Menu.Item>
           )
         )
+        .concat(mapedResult)
       )
     }
   }
@@ -61,24 +79,30 @@ class SearchBar extends Component {
   }
 
   handleChange(event) {
+    const value = event.target.value;
     this.setState({
       ...this.state,
-      term: event.target.value
+      term: value
     })
+    if(value==="") {
+      return this.props.updateResult([]);
+    }
+    this.search(value);
   }
 
   handleClick(event) {
     const { value, name, locality } = event.item.props;
     this.props.updateLocation(value, name, locality);
     this.setState({
+      term: name,
       showOption: false
     })
   }
 
   onSearch() {
-    this.props.search(this.state.term);
+    if(this.state.term==="") return;
+    this.searchLocation(this.state.term);
     this.setState({
-      term: '',
       showOption: false
     })
   }
@@ -105,10 +129,7 @@ class SearchBar extends Component {
           onFocus={this.onFocus}
           style={{ width: '100%' }}
         />
-          <Menu
-            style={{overflowY: "scroll", maxHeight: 300}}
-            onClick={this.handleClick}
-          >
+          <Menu style={{overflowY: "scroll", maxHeight: 300}} onClick={this.handleClick} >
           {
             this.state.showOption
             ? this.renderOption()
@@ -122,7 +143,8 @@ class SearchBar extends Component {
 
 function mapStateToProps(state) {
   return {
-    node: state.node
+    node: state.node,
+    result: state.result
   }
 }
 
